@@ -12,6 +12,7 @@ public:
     {}
     void Excute()
     {
+        sleep(10);
         _result=_x+_y;
     }
     std::string Result()
