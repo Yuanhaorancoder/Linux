@@ -14,7 +14,8 @@
 using namespace LogModule;
 
 // 参数就是获得的数据，返回值就是处理完数据的结果
-using callback_t = std::function<std::string(const std::string &)>;
+// using callback_t = std::function<std::string(const std::string &)>;
+using callback_t = std::function<void (std::string message,InetAddr who, int sockfd)>;
 
 class UdpServer
 {
@@ -73,20 +74,15 @@ public:
             inbuffer[n] = 0;
             InetAddr clientaddr(peer);
 
-            // 网络系列数据
-            LOG(LogLevel::INFO)<<"get a message: "<<inbuffer
-                               <<",client addr: "<<clientaddr.IP()<< ":" <<clientaddr.Port();
-
             // 处理数据
-            std::string result;
             if(_cb)
             {
-                result = _cb(inbuffer);
+                _cb(inbuffer,clientaddr,_sockfd);
             }
 
-            // 发送网络数据
-            int m = sendto(_sockfd,result.c_str(),result.size(),0,(struct sockaddr*)&peer,len);
-            (void)m;
+            // // 发送网络数据
+            // int m = sendto(_sockfd,result.c_str(),result.size(),0,(struct sockaddr*)&peer,len);
+            // (void)m;
         }
     }
     ~UdpServer(){}

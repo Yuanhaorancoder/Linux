@@ -19,6 +19,7 @@ public:
         _port = ntohs(_net_addr.sin_port);
         _ip = inet_ntoa(_net_addr.sin_addr);
     }
+    
     InetAddr(uint16_t port, std::string ip = "0.0.0.0")
         :_port(port),_ip(ip)
     {
@@ -39,6 +40,10 @@ public:
     socklen_t AddrLen()
     {
         return sizeof(_net_addr);
+    }
+    std::string StringAddress()
+    {
+        return "[" + _ip + ":" + std::to_string(_port) + "]";
     }
     ~InetAddr()
     {
