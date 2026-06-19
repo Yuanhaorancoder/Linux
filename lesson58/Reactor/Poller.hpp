@@ -30,7 +30,14 @@ public:
     }
     void AddEvents(int sockfd,uint32_t events)
     {
-
+        struct epoll_event ev;
+        ev.events = events;
+        ev.data.fd = sockfd;
+        int n = epoll_ctl(_epfd,EPOLL_CTL_ADD,sockfd,&ev);
+        if(n < 0)
+        {
+            LOG(LogLevel::FATAL) << "epoll_ctl error!";
+        }
     }
     int WaitEvents(struct epoll_event revs[],int num,int timeout)
     {
@@ -38,6 +45,10 @@ public:
         if(n < 0)
         {
             LOG(LogLevel::FATAL) << "epoll_wait error!";
+        }
+        else if(n == 0)
+        {
+            LOG(LogLevel::INFO) << "epoll_wait timeout!";
         }
         return n;
     }

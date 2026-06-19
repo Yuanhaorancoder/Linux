@@ -25,7 +25,7 @@ public:
     virtual void BindSocketOrdie(uint16_t port) = 0;
     virtual void ListenSocketOrdie() = 0;
     // virtual std::shared_ptr<Socket> Accepter(InetAddr *clientaddr) = 0;
-    virtual int Accepter(InetAddr *clientaddr) = 0;
+    virtual int Accepter(InetAddr *clientaddr,int *errcode) = 0;
     virtual void ConnectOrdie(const std::string &serverip,uint16_t serverport) = 0;
     
     virtual int Socketfd() = 0;
@@ -62,6 +62,7 @@ public:
             LOG(LogLevel::FATAL) << "create socket error";
             exit(SOCKET_ERR);
         }
+        SetNonBlock(_sockfd); // 设置为非阻塞
         int opt = 1;
         setsockopt(_sockfd,SOL_SOCKET,SO_REUSEADDR | SO_REUSEPORT,&opt,sizeof(opt));
         LOG(LogLevel::INFO) << "create socket success";
@@ -87,11 +88,12 @@ public:
         }
         LOG(LogLevel::INFO) << "listen socket success";
     }
-    int Accepter(InetAddr *clientaddr) override
+    int Accepter(InetAddr *clientaddr,int *errcode) override
     {
         struct sockaddr_in peer;
         socklen_t len = sizeof(peer);
         int sockfd = accept(_sockfd,CONV(&peer),&len);
+        *errcode = errno;
         if(sockfd < 0)
         {
             return -1;
