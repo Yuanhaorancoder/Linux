@@ -25,9 +25,13 @@ public:
     {
         return _sockfd;
     }
-
+    void Close() override
+    {
+        close(_sockfd);
+    }
     void Recver() override
     {
+        Updata();
         LOG(LogLevel::INFO) << "IOHandler event ready, sockfd is : " << _sockfd;
         // 你必须循环式的把本次数据全部读取完毕
         while(true)
@@ -83,11 +87,15 @@ public:
 
         // 发送
         // version1
+        // if(!_outbuffer.empty())
+        //     Sender();
+        // version2
         if(!_outbuffer.empty())
-            Sender();
+            _R->EnableReadWrite(_sockfd,true,true); // 使能写事件关心
     }
     void Sender() override
     {
+        Updata();
         while(true)
         {
             ssize_t n = send(_sockfd,_outbuffer.c_str(),_outbuffer.size(),0);
@@ -131,7 +139,7 @@ public:
     void Excepter() override
     {
         LOG(LogLevel::ERROR) << "Excepter, address is: " << _clientaddr.StringAddress() << " sockfd: " << _sockfd;
-
+        _R->DelConnection(_sockfd);
     }
 private:
     int _sockfd;

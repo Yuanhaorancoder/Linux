@@ -27,10 +27,14 @@ public:
     {
         return _listensock->Socketfd();
     }
+    void Close() override
+    {
+        _listensock->Close();
+    }
 
     void Recver() override
     {
-        LOG(LogLevel::INFO) << "event ready, sockfd is : " << _listensock;
+        LOG(LogLevel::INFO) << "event ready, sockfd is : " << _listensock->Socketfd();
         while(true)
         {
             int errcode = 0;
@@ -39,7 +43,7 @@ public:
             if(sockfd >= 0)
             {
                 // success
-                LOG(LogLevel::INFO) << "get a new sockfd success: " << sockfd;
+                LOG(LogLevel::INFO) << "get a new sockfd success: " << sockfd << " client addr: " << clientaddr.StringAddress();
                 // 可以直接recv吗? recv(sockfd)? --- 不能
                 // a.sockfd 包装成为 Connection->IOHandler
                 // 1.设置 sockfd 为非阻塞

@@ -193,7 +193,7 @@ public:
             {
                 *code = -1;
                 LOG(LogLevel::DEBUG) << "协议解析失败";
-                exit(1);
+                return std::string();
             }
             // 我就可以保证streamstr一定至少有一个报文
             LOG(LogLevel::DEBUG) << "request : jsonstring: " << jsonstring;

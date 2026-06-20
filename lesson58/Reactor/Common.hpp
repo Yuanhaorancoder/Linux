@@ -3,6 +3,7 @@
 #include <iostream>
 #include <sys/epoll.h>
 #include <fcntl.h>
+#include <time.h>
 #include "Logger.hpp"
 
 using namespace LogModule;
@@ -24,4 +25,9 @@ void SetNonBlock(int fd)
         return;
     }
     fcntl(fd,F_SETFL,flags | O_NONBLOCK);
+}
+
+uint64_t CurrentTimeStamp()
+{
+    return (uint64_t)time(nullptr);
 }

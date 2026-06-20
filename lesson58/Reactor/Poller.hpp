@@ -17,6 +17,19 @@ using namespace LogModule;
 
 class Poller
 {
+private:
+    int EpollCtlHelper(int sockfd,uint32_t events,int oper)
+    {
+        if(oper == EPOLL_CTL_DEL)
+        {
+            return epoll_ctl(_epfd,oper,sockfd,nullptr);    
+        }
+
+        struct epoll_event ev;
+        ev.events = events;
+        ev.data.fd = sockfd;
+        return epoll_ctl(_epfd,oper,sockfd,&ev);
+    }
 public:
     Poller()
     {
@@ -28,15 +41,24 @@ public:
         }
         LOG(LogLevel::INFO) << "epoll_create success: " << _epfd;
     }
+    void DelEvents(int sockfd)
+    {
+        EpollCtlHelper(sockfd,0,EPOLL_CTL_DEL);
+    }
     void AddEvents(int sockfd,uint32_t events)
     {
-        struct epoll_event ev;
-        ev.events = events;
-        ev.data.fd = sockfd;
-        int n = epoll_ctl(_epfd,EPOLL_CTL_ADD,sockfd,&ev);
+        int n = EpollCtlHelper(sockfd,events,EPOLL_CTL_ADD);
         if(n < 0)
         {
-            LOG(LogLevel::FATAL) << "epoll_ctl error!";
+            LOG(LogLevel::FATAL) << "AddEvents error!";
+        }
+    }
+    void ModEvents(int sockfd,uint32_t events)
+    {
+        int n = EpollCtlHelper(sockfd,events,EPOLL_CTL_MOD);
+        if(n < 0)
+        {
+            LOG(LogLevel::FATAL) << "ModEvents error!";
         }
     }
     int WaitEvents(struct epoll_event revs[],int num,int timeout)

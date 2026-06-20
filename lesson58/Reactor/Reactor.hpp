@@ -38,12 +38,30 @@ public:
         LOG(LogLevel::INFO) << "insert " << conn->Sockfd() << " into Reactor!";
     }
 
-    void EnableReadWrite(int sockfd,bool isread,bool iswrite)
+    void EnableReadWrite(int sockfd,bool enableread,bool enablewrite)
     {
-        if(!IsConnectionExists(sockfd)) return;
-        
+        if(!IsConnectionExists(sockfd)) 
+            return;
+        uint32_t events = ((enableread?EPOLLIN:0) | (enablewrite?EPOLLOUT:0) | EPOLLET);
+        _connections[sockfd]->SetEvents(events);
+        // 写透到内核
+        _epoller->ModEvents(sockfd,events);
     }
+    void DelConnection(int sockfd)
+    {
+        if(!IsConnectionExists(sockfd)) 
+            return;
 
+        LOG(LogLevel::INFO) << "delete sockfd: " << sockfd;
+        // 1.从epoll中移除
+        _epoller->DelEvents(sockfd);
+
+        // 2.关闭fd
+        _connections[sockfd]->Close();
+
+        // 2.从_connections移除
+        _connections.erase(sockfd);
+    }
     void LoopOnce(int timeout)
     {
         int n = _epoller->WaitEvents(revs, gnum, timeout);
@@ -74,6 +92,22 @@ public:
         }
     }
 
+    void ConnectionKeepAlive()
+    {
+        // 
+    }
+
+    void Dispatcher()
+    {
+        int timeout = 1000; 
+        while (true)
+        {
+            // DebugPrint();
+            LoopOnce(timeout);
+            ConnectionKeepAlive();
+        }
+    }
+
     void DebugPrint()
     {
         std::cout << "Reactor dsockfd list: ";
@@ -82,16 +116,6 @@ public:
             std::cout << conn.second->Sockfd() << " ";
         }
         std::cout << std::endl;
-    }
-
-    void Dispatcher()
-    {
-        int timeout = -1;
-        while (true)
-        {
-            DebugPrint();
-            LoopOnce(timeout);
-        }
     }
 
     ~Reactor()
@@ -103,6 +127,7 @@ private:
     std::unique_ptr<Poller> _epoller; // 我们从epoll这里拿到的之后，哪一个fd的哪些时间就绪！
     // 2.组织connection
     std::unordered_map<int, std::shared_ptr<Connection>> _connections; // 服务器内所有的connection
+    // Heap<std::shared_ptr<Connection>> Heap;
     // 3.已经就绪的事件清单
     struct epoll_event revs[gnum];
 };
